@@ -1,2 +1,31 @@
 # Expense-Tracker-Webapp
-A Webapp expense tracker built with Python and Streamlit using JSON for persistent storage.
+
+A simple and interactive Expense Tracker Web App built to help users record, manage, and analyze their daily expenses efficiently.
+
+
+
+## Features
+
+- Add new expenses (name, amount, date)
+
+- View all expenses in a clean table
+
+- Delete specific expenses 
+
+- Track total spending automatically
+
+- Get quick summary (Total Spent & Number of Expenses)
+
+- Reset all data instantly
+
+- Clean and modern UI
+
+## Technologies used
+
+- Python
+
+- Streamlit
+
+- Pandas (for data handling)
+
+- csv (for storage)
