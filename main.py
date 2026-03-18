@@ -1,96 +1,71 @@
-import json
 import streamlit as st
-#loding data storage=>expenses.json
-try:
-    with open("expenses.json","r") as file:
-        expense=json.load(file)
-except:
-    expense=[] #when the json file is not available        
-st.title(f"📊 Expense-Tracker",text_alignment="center")
+import pandas as pd
+st.set_page_config(layout="wide",page_title="Expense-Tracker",page_icon="📊")
+st.markdown("""
+<style>
+.title-box {
+    background-color: #1f3b5c;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;        
+}
 
-#Program menu design
-"""
-print(f"2. View Expenses")
-print(f"3. View Total Spent")
-print(f"4. View Total Expenses")
-print(f"5. Delete Expense")
-print(f"6. Clear Expenses")
-print(f"7. Exit")
-"""   
-    #if else condition
-with st.form("Add Expense"):
-    st.header("Add Expense",text_alignment="center")
-    category=st.text_input("Enter Category")
-    amount=st.number_input("Enter Amount",min_value=100,max_value=1000)
-    date=st.text_input("Enter Date",placeholder="DD/MM/YY")    
-    if st.form_submit_button("Submit",icon=":material/check:",icon_position="right"):
-        if expense==[] and (category =="" and amount ==100 and date==""):
+.title-text {
+    color: white;
+    font-size: 36px;
+    font-weight: bold;
+}
+</style>
+""", unsafe_allow_html=True)
+
+st.markdown("""<div class="title-box"><div class="title-text">Expense-Tracker</div></div>""",unsafe_allow_html=True)
+expenses=pd.read_csv("expenses.csv",index_col=False)
+col1,col2,col3=st.columns([1,2,1])
+col1.subheader("Add New Expense",text_alignment="left")
+col2.subheader("Your Expenses",text_alignment="center")
+col3.subheader("Track Summary",text_alignment="right")
+with col1.form("Add_New_Expense"):
+    expense_name=st.text_input("Expense Name",placeholder="example: coffee")
+    amount=st.number_input("Amount ($)")
+    date=st.date_input("Date")
+    if st.form_submit_button("Add Expense"):      
+        if (expense_name==""):
             st.error("Error",icon=":material/error:")
-            st.toast("Invalid input")
-        elif (expense[len(expense)-1]["Category"]==category) and (expense[len(expense)-1]["Date"]==date) and (expense[len(expense)-1]["Amount"]==amount):
-            st.error("Error",icon=":material/error:")
-            st.toast("Value already exists")
-        
+            st.toast("Invalid Input")
         else:
-            expense.append({"Category":category,"Amount":amount,"Date":date})
-            with open("expenses.json","w") as file:
-                json.dump(expense,file)
-            st.success("Expense added successfully",icon=":material/data_check:")    
-st.divider()
-        
-    
-if st.button("View Expenses"):
-    index=0
-    st.write(f"{'Category':<15}{'Amount':<10}{'Date':<12}")
-    print("-"*36)
-    while index<len(expense):
-        print(f"{index}. {expense[index]['Category']:<12}{expense[index]['Amount']:<10}{expense[index]['Date']:<12}")
-        index+=1
-    print("-"*20)    
-"""
-    elif option==3:
-        total_spent=0
-        index=0
-        while index<len(expense):
-            total_spent=total_spent+expense[index]["Amount"]
-            index+=1
-        print(f"Total spent: {total_spent}")
-        print("-"*20)
-    elif option==4:
-        print(f"Total Expenses: {len(expense)}")
-        print("-"*20)
-    elif option==5:
-        while True:
-            index=0
-            print(f"{'Category':<15}{'Amount':<10}{'Date':<12}")
-            print("-"*36)
-            while index<len(expense):
-                print(f"{index}. {expense[index]['Category']:<12}{expense[index]['Amount']:<10}{expense[index]['Date']:<12}")
-                index+=1
-            print("-"*20)
-            try:
-                delete_index=int(input("Enter number to delete: "))
-            except ValueError:
-                print("Invalid input :(")
-                print("-"*20)
-                continue
-            if 0<=delete_index<len(expense):    
-                expense.pop(delete_index)
-                with open("expenses.json","w") as file:
-                    json.dump(expense,file)
-                print("Expense deleted successfully! ^_^")
-                break
+            if amount==0:
+                st.error("Error",icon=":material/error:")
+                st.toast("Amount can't be 0") 
             else:
-                print("Invalid number! Please enter correct number :(")    
-            print("-"*20)
-    elif option==6:
-        with open("expenses.json","w") as file:
-            json.dump([],file)
-            expense=[]
-        print(f"Expenses cleared successfully! ^_^")
-        print("-"*20)    
-    elif option==7:
-        print(f"Program exited successfully! ^_^")
-        print("-"*20)
-"""
-      
+                row_df={"Name":expense_name,"Amount":amount,"Date":date}
+                expenses=pd.concat([expenses,pd.DataFrame([row_df])],ignore_index=True)
+                expenses.to_csv("expenses.csv",index=False)
+                st.rerun()
+col2.dataframe(expenses)
+delete_expense=col2.number_input("Enter Number to Delete",min_value=0)
+if col2.button("Delete",type="primary"):
+    try:
+        expenses=expenses.drop(delete_expense)
+        expenses.to_csv("expenses.csv",index=False)
+    except:
+        pass
+    st.rerun()    
+
+col3.metric("Total Spent ($)",expenses["Amount"].sum())
+col3.metric("Total Expenses",len(expenses))
+if "confirm" not in st.session_state:
+    st.session_state["confirm"]=False
+if col3.button("Reset",type="primary"):
+    st.session_state["confirm"]=True     
+if st.session_state["confirm"]:
+    col3.warning("All data will be lost")
+    if col3.button("confirm"):
+        expenses=pd.DataFrame(columns=["Name", "Amount", "Date"])
+        expenses.to_csv("expenses.csv",index=False)
+        st.session_state["confirm"]=False    
+        st.rerun()
+        
+
+
+
+
